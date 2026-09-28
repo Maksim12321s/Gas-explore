@@ -22,10 +22,7 @@ namespace Simulation {
     }
     
     void Simulation::heat(const vec2::Vec2& center, double radius, double energy_factor) {
-        // Энергия пропорциональна v², поэтому скорость умножаем на корень из множителя.
         const double speed_factor = std::sqrt(energy_factor);
-        // Ограничение скорости: за один шаг частица должна пролетать меньше своего радиуса,
-        // иначе быстрые частицы начнут проскакивать друг сквозь друга.
         const double max_speed = 0.5 * config_.r / config_.dt;
     
         for (auto& p : particles_) {
@@ -38,6 +35,16 @@ namespace Simulation {
             }
         }
     }
+
+    void Simulation::addDT(double dt){
+        if (config_.dt <= 0){
+            config_.dt = 0.05;
+        }
+        config_.dt += dt;
+        
+    }
+
+
     Simulation::Simulation(const Config& config) : config_(config) {
         const int n = config_.n;
         if (n <= 0) {

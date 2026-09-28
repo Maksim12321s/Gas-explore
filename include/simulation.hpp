@@ -5,7 +5,7 @@
 
 namespace Simulation{
     struct Config{
-        int n = 300;
+        int n = 2;
         double h = 300;
         double w = 300;
         double r = 0.8;
@@ -22,10 +22,11 @@ namespace Simulation{
         explicit Simulation(const Config& config);
         void step();
         void heat(const vec2::Vec2& center, double radius, double energy_factor);
+        void addDT(double dt);
     
         double kinetic_energy() const;
         double temperature() const;
-    
+        
         double wall_impulse() const;
         void reset_wall_impulse();
     
