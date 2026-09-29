@@ -6,7 +6,7 @@
 int main() {
 
     Simulation::Config config;
-    config.n = 300;
+    config.n = 10;
     config.w = 100.0;
     config.h = 100.0;
     config.r = 0.8;

@@ -6,29 +6,32 @@
 using namespace Simulation;
 
 
-void makeColor(sf::CircleShape& c, float en, Particle p){
+void makeColor(sf::CircleShape& c, float en, const Particle& p){
     double sEn = p.m * (p.vel.x * p.vel.x + p.vel.y * p.vel.y) / 2;
     double k = sEn/en;
-    c.setFillColor(sf::Color(100,k*255,100));
+    double t = std::min(k/3.0, 1.0);
+    auto g = static_cast<sf::Uint8>(255 * t);
+    c.setFillColor(sf::Color(255*t,0,(1-t)*255));
 }
-
-void refreshLabel(sf::Text& label, Simulation::Simulation sim){
+void refreshLabel(sf::Text& label, const Simulation::Simulation& sim, int steps){
     Config c = sim.config();
     std::ostringstream text;
-    text << "E = " << sim.kinetic_energy()
+    text<< "E = " << sim.kinetic_energy()
         << "   kT = " << sim.temperature()
-        << "   dt   = " << c.dt 
+        << "   steps   = " << steps
         << "   time = " << sim.current_time() ;
     label.setString(text.str());
 }
 
 int main(){
     bool wasPressed = false;
+    bool debug = true;
     Config conf;
     conf.r = 10;
     conf.h = 800;
     conf.w = 800;
-    conf.n = 100;
+    conf.n = 1000;
+    int steps = 5;
 
     
     Simulation::Simulation sim(conf);
@@ -56,7 +59,8 @@ int main(){
     label.setPosition(10.f, 10.f);           
 
     
-    sf::RenderWindow window(sf::VideoMode(conf.h,conf.h), "Gas sim");
+    sf::RenderWindow window(sf::VideoMode(conf.w,conf.h), "Gas sim");
+    window.setFramerateLimit(60);
 
 
     while(window.isOpen()){
@@ -69,9 +73,12 @@ int main(){
                 if(event.key.code == sf::Keyboard::Escape){
                     wasPressed = !wasPressed;
                 }else if(event.key.code == sf::Keyboard::Up){
-                    sim.addDT(0.005);
+                    steps += 1;
                 }else if(event.key.code == sf::Keyboard::Down){
-                    sim.addDT(-0.005);
+                    steps -= 1;
+                }
+                if(debug == true){
+
                 }
             }
         }
@@ -82,10 +89,14 @@ int main(){
             circles[i].setPosition(particles[i].pos.x,particles[i].pos.y);
             window.draw(circles[i]);
         }
-        refreshLabel(label, sim);
+        refreshLabel(label, sim, steps);
         window.draw(label);
         window.display();
-        if(!wasPressed) sim.step();
+        if(!wasPressed) {
+            for(int i = 0; i < steps; i++){
+                sim.step();
+            }
+        }
     }
 
 

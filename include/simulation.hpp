@@ -13,6 +13,7 @@ namespace Simulation{
         double dt = 0.05;
         double initial_speed = 1;
         unsigned seed = 42;
+        vec2::Vec2 g = vec2::Vec2(0,9.8);
     };
     
     bool resolve_collision(Particle& a, Particle& b);
@@ -22,7 +23,6 @@ namespace Simulation{
         explicit Simulation(const Config& config);
         void step();
         void heat(const vec2::Vec2& center, double radius, double energy_factor);
-        void addDT(double dt);
     
         double kinetic_energy() const;
         double temperature() const;
@@ -39,13 +39,24 @@ namespace Simulation{
         void move_particles();
         void collide_with_walls();
         void collide_pairs();
+        void makeNetwork();
+        void collide_cells(int i, int j);
+        void clear_cells();
+        void reflect_axis(double& pos, double& vel, double lo, double hi,double m, double r, double& impulse_lo, double& impulse_hi);
     
         Config config_;
         std::vector<Particle> particles_;
         double current_time_ = 0.0;
         double wall_impulse_ = 0.0;
 
-    
-    
+        int cols = 0;
+        int rows = 0;
+        double cell_w = 0;
+        double cell_h = 0;
+        std::vector<double> walls_imp;
+        std::vector<std::vector<int>> cells;
+
+        bool mode = false;
+
     };
 };
