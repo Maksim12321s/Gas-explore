@@ -23,6 +23,7 @@ namespace Simulation{
         explicit Simulation(const Config& config);
         void step();
         void heat(const vec2::Vec2& center, double radius, double energy_factor);
+        void set_piston_vel(double vel);
     
         double kinetic_energy() const;
         double temperature() const;
@@ -34,6 +35,10 @@ namespace Simulation{
         const Config& config() const;
     
         const std::vector<Particle>& particles() const;
+
+        double piston_x() const;
+        double piston_imp() const;
+        double piston_velocity() const;
     
     private:
         void move_particles();
@@ -42,12 +47,12 @@ namespace Simulation{
         void makeNetwork();
         void collide_cells(int i, int j);
         void clear_cells();
-        void reflect_axis(double& pos, double& vel, double lo, double hi,double m, double r, double& impulse_lo, double& impulse_hi);
+        void reflect_axis(double& pos, double& vel, double lo, double lo_u, double hi, double hi_u,double m, double r, double& impulse_lo, double& impulse_hi);
+        void move_piston();
     
         Config config_;
         std::vector<Particle> particles_;
         double current_time_ = 0.0;
-        double wall_impulse_ = 0.0;
 
         int cols = 0;
         int rows = 0;
@@ -57,6 +62,12 @@ namespace Simulation{
         std::vector<std::vector<int>> cells;
 
         bool mode = false;
+
+        //piston
+        double piston_x_ = 0;
+        double piston_max_x = 0;
+        double piston_u = 0;
+        double piston_imp_ = 0;
 
     };
 };

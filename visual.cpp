@@ -19,6 +19,7 @@ void refreshLabel(sf::Text& label, const Simulation::Simulation& sim, int steps)
     text<< "E = " << sim.kinetic_energy()
         << "   kT = " << sim.temperature()
         << "   steps   = " << steps
+        << "   piston vel = " << sim.piston_velocity() 
         << "   time = " << sim.current_time() ;
     label.setString(text.str());
 }
@@ -27,11 +28,12 @@ int main(){
     bool wasPressed = false;
     bool debug = true;
     Config conf;
-    conf.r = 10;
+    conf.r = 3;
     conf.h = 800;
     conf.w = 800;
-    conf.n = 1000;
+    conf.n = 50;
     int steps = 5;
+    const double u = 0.01;
 
     
     Simulation::Simulation sim(conf);
@@ -47,6 +49,9 @@ int main(){
         circles.push_back(circle);
     }
 
+    sf::RectangleShape piston;
+    piston.setFillColor(sf::Color(90, 90, 110));
+    piston.setPosition(0.f, 0.f);
     sf::Font font;
     if (!font.loadFromFile("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")) {
         return 1;  // шрифт не найден
@@ -76,10 +81,18 @@ int main(){
                     steps += 1;
                 }else if(event.key.code == sf::Keyboard::Down){
                     steps -= 1;
-                }
+                } 
+                
                 if(debug == true){
 
                 }
+            }
+            if(sf::Keyboard::isKeyPressed(sf::Keyboard::Right)){
+                sim.set_piston_vel(u);
+            }else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Left)){
+                sim.set_piston_vel(-u);
+            }else{
+                sim.set_piston_vel(0);
             }
         }
 
@@ -89,6 +102,9 @@ int main(){
             circles[i].setPosition(particles[i].pos.x,particles[i].pos.y);
             window.draw(circles[i]);
         }
+        const float px = static_cast<float>(sim.piston_x());
+        piston.setSize(sf::Vector2f(px, static_cast<float>(conf.h)));
+        window.draw(piston);
         refreshLabel(label, sim, steps);
         window.draw(label);
         window.display();

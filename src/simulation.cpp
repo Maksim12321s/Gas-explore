@@ -58,7 +58,7 @@ namespace Simulation {
         std::uniform_real_distribution<double> angle_dist(0.0, 2.0 * M_PI);
         for(int i = 0; i < config_.n; i++){
             const int col = i % cols;  
-            const int row = i / rows;
+            const int row = i / cols;
 
             double phi = angle_dist(rng);
             Vec2 V = Vec2(cos(phi),sin(phi)) * config_.initial_speed;
@@ -73,16 +73,22 @@ namespace Simulation {
 
         cells.resize(this->cols* this->rows);
         walls_imp.resize(4);
+        // piston_max_x = 3.0/4.0*config_.w;
+        piston_max_x = 330;
 
     }
     
     void Simulation::step() {
+        move_piston();
         move_particles();
         collide_with_walls();
         collide_pairs();
         current_time_ += config_.dt;
     }
     
+    void Simulation::set_piston_vel(double vel){
+        piston_u = vel;
+    }
     void Simulation::move_particles() {
         for(int i = 0; i < particles_.size(); i++){
             particles_[i].pos = particles_[i].pos +  particles_[i].vel * config_.dt;
@@ -93,17 +99,8 @@ namespace Simulation {
 
         for(int i = 0; i < particles_.size(); i++){
             Particle& p = particles_[i];
-            
-            // if((p.pos.x + p.r > config_.w && p.vel.x > 0) || (p.pos.x - p.r < 0 && p.vel.x < 0)){
-            //     p.vel.x = p.vel.x * -1;
-            //     wall_impulse_ += 2 * p.m * std::abs(p.vel.x);
-            // }
-            // if((p.pos.y + p.r > config_.h && p.vel.y > 0) || (p.pos.y - p.r < 0 && p.vel.y < 0) ){
-            //     p.vel.y = p.vel.y * -1;
-            //     wall_impulse_ += 2 * p.m * std::abs(p.vel.y);
-            // }
-            reflect_axis(p.pos.x,p.vel.x,0,config_.w,p.m,p.r,walls_imp[0],walls_imp[1]);
-            reflect_axis(p.pos.y,p.vel.y,0,config_.h,p.m,p.r,walls_imp[2],walls_imp[2]);
+            reflect_axis(p.pos.x,p.vel.x,piston_x_,piston_u,config_.w,0,p.m,p.r,walls_imp[0],walls_imp[1]);
+            reflect_axis(p.pos.y,p.vel.y,0,0,config_.h,0,p.m,p.r,walls_imp[2],walls_imp[3]);
         }
     }
     void Simulation::collide_cells(int a, int b){
@@ -172,20 +169,31 @@ namespace Simulation {
     }
 
     
-    void Simulation::reflect_axis(double& pos, double& vel, double lo, double hi,double m, double r, double& impulse_lo, double& impulse_hi){
+    void Simulation::reflect_axis(double& pos, double& vel, double lo, double lo_u, double hi, double hi_u,double m, double r, double& impulse_lo, double& impulse_hi){
         if(pos - r < lo){
             pos = 2*(lo + r) - pos;
-            if(vel < 0){
-                vel = -vel;
-                impulse_lo += 2 * m * vel;
+            if(vel - lo_u < 0){
+                double x = vel;
+                vel = 2*lo_u -vel;
+                impulse_lo += m * (vel - x);
             }
         }else if(pos + r > hi){
             pos = 2*(hi - r) - pos;
-            if(vel > 0){
-                vel = -vel;
-                impulse_hi += 2.0*m*(-vel);
+            if(vel - hi_u > 0){
+                double x = vel;
+                vel = 2*hi_u -vel;
+                impulse_hi += m * (vel - x);
             }
         }
+    }
+    void Simulation::move_piston(){
+        if(piston_x_ + piston_u*config_.dt > piston_max_x) {
+            piston_x_ = piston_max_x;
+            piston_u = 0;
+        }else if(piston_x_ + piston_u*config_.dt < 0) {
+            piston_x_ = 0;
+            piston_u = 0;
+        }else piston_x_ += piston_u*config_.dt;
     }
 
 
@@ -202,9 +210,17 @@ namespace Simulation {
         return kinetic_energy() / particles_.size();
     }
     
-    double Simulation::wall_impulse() const { return wall_impulse_; }
-    void Simulation::reset_wall_impulse() { wall_impulse_ = 0.0; }
+    double Simulation::wall_impulse() const { return (walls_imp[0] + walls_imp[1] + walls_imp[2] + walls_imp[3]); }
+    void Simulation::reset_wall_impulse() { 
+        walls_imp[0] = 0;
+        walls_imp[1] = 0;
+        walls_imp[2] = 0;
+        walls_imp[3] = 0; 
+    }
     double Simulation::current_time() const { return current_time_; }
+    double Simulation::piston_imp() const {return piston_imp_;}
+    double Simulation::piston_x() const {return piston_x_;}
+    double Simulation::piston_velocity() const { return piston_u; }
     const Config& Simulation::config() const { return config_; }
     const std::vector<Particle>& Simulation::particles() const { return particles_; }
 
