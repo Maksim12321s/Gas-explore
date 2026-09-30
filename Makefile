@@ -1,14 +1,18 @@
-CXX      := g++
-CXXFLAGS := -std=c++17 -O2 -Wall -Wextra -Wpedantic -Iinclude -MMD -MP
-SFML_LIBS := -lsfml-graphics -lsfml-window -lsfml-system
-BUILD    := build-make
+CXX        := g++
+CXXFLAGS   := -std=c++17 -O2 -Wall -Wextra -Wpedantic -Isimulation/include -MMD -MP
+SFML_LIBS  := -lsfml-graphics -lsfml-window -lsfml-system
+GTEST_LIBS := -lgtest_main -lgtest -pthread
+BUILD      := build-make
 
-# Исходники библиотеки, программ и тестов.
-LIB_SRC  := $(wildcard src/*.cpp)
-LIB_OBJ  := $(patsubst %.cpp,$(BUILD)/%.o,$(LIB_SRC))
-APP_OBJ  := $(BUILD)/main.o
-VIS_OBJ  := $(BUILD)/visual.o
+# ---------- Исходники по модулям ----------
+SIM_SRC  := $(wildcard simulation/src/*.cpp)
+VIS_SRC  := $(wildcard visual/src/*.cpp)
+APP_SRC  := console/main.cpp
 TEST_SRC := $(wildcard tests/*.cpp)
+
+SIM_OBJ  := $(patsubst %.cpp,$(BUILD)/%.o,$(SIM_SRC))
+VIS_OBJ  := $(patsubst %.cpp,$(BUILD)/%.o,$(VIS_SRC))
+APP_OBJ  := $(patsubst %.cpp,$(BUILD)/%.o,$(APP_SRC))
 TEST_OBJ := $(patsubst %.cpp,$(BUILD)/%.o,$(TEST_SRC))
 
 APP      := $(BUILD)/gaz
@@ -19,14 +23,20 @@ TEST_BIN := $(BUILD)/gaz_tests
 
 all: $(APP)
 
-$(APP): $(LIB_OBJ) $(APP_OBJ)
+# Консольная программа: физика + console/main.cpp
+$(APP): $(SIM_OBJ) $(APP_OBJ)
 	$(CXX) $^ -o $@
 
-$(VISUAL): $(LIB_OBJ) $(VIS_OBJ)
+# Визуализация: физика + всё из visual/src, плюс SFML
+$(VISUAL): $(SIM_OBJ) $(VIS_OBJ)
 	$(CXX) $^ -o $@ $(SFML_LIBS)
 
-$(TEST_BIN): $(LIB_OBJ) $(TEST_OBJ)
-	$(CXX) $^ -o $@
+# Тесты: физика + tests, плюс GoogleTest (библиотеки — после объектных файлов)
+$(TEST_BIN): $(SIM_OBJ) $(TEST_OBJ)
+	$(CXX) $^ -o $@ $(GTEST_LIBS)
+
+# Заголовки визуализации видны только файлам визуализации.
+$(VIS_OBJ): CXXFLAGS += -Ivisual/include
 
 # Общее правило: build-make/путь/файл.o собирается из путь/файл.cpp
 $(BUILD)/%.o: %.cpp
@@ -51,4 +61,4 @@ clean:
 	rm -rf $(BUILD)
 
 # Файлы зависимостей от заголовков (создаются флагами -MMD -MP).
--include $(LIB_OBJ:.o=.d) $(APP_OBJ:.o=.d) $(VIS_OBJ:.o=.d) $(TEST_OBJ:.o=.d)
+-include $(SIM_OBJ:.o=.d) $(VIS_OBJ:.o=.d) $(APP_OBJ:.o=.d) $(TEST_OBJ:.o=.d)

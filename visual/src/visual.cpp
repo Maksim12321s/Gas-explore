@@ -1,9 +1,11 @@
 #include <SFML/Graphics.hpp>
-#include "include/simulation.hpp"
+#include "simulation.hpp"
 #include <vector>
 #include <iostream>
 #include <sstream>
+#include "species.hpp"
 using namespace Simulation;
+using namespace Simulation::units;
 
 
 void makeColor(sf::CircleShape& c, float en, const Particle& p){
@@ -27,14 +29,13 @@ void refreshLabel(sf::Text& label, const Simulation::Simulation& sim, int steps)
 int main(){
     bool wasPressed = false;
     bool debug = true;
-    Config conf;
-    conf.r = 3;
-    conf.h = 800;
-    conf.w = 800;
-    conf.n = 50;
+    
+
+    Simulation::Config conf = Simulation::make_config(Simulation::Argon, 300.0, 20*nm, 20*nm, 20);
     int steps = 5;
     const double u = 0.01;
 
+    const double scale = 800/conf.w;
     
     Simulation::Simulation sim(conf);
     const std::vector<Particle>& particles = sim.particles();
@@ -42,10 +43,10 @@ int main(){
 
     std::vector<sf::CircleShape> circles;
     for(int i = 0; i < particles.size(); i++){
-        sf::CircleShape circle(conf.r);
+        sf::CircleShape circle(conf.r * scale);
         circle.setFillColor(sf::Color::Cyan);   
-        circle.setOrigin(conf.r, conf.r);
-        circle.setPosition(particles[i].pos.x,particles[i].pos.y);
+        circle.setOrigin(conf.r * scale, conf.r*scale);
+        circle.setPosition(particles[i].pos.x*scale,particles[i].pos.y*scale);
         circles.push_back(circle);
     }
 
@@ -64,7 +65,7 @@ int main(){
     label.setPosition(10.f, 10.f);           
 
     
-    sf::RenderWindow window(sf::VideoMode(conf.w,conf.h), "Gas sim");
+    sf::RenderWindow window(sf::VideoMode(conf.w*scale,conf.h*scale), "Gas sim");
     window.setFramerateLimit(60);
 
 
@@ -99,11 +100,11 @@ int main(){
         window.clear(sf::Color::Black);
         for(int i = 0; i < particles.size(); i++){
             makeColor(circles[i],sim.kinetic_energy()/conf.n, particles[i]);
-            circles[i].setPosition(particles[i].pos.x,particles[i].pos.y);
+            circles[i].setPosition(particles[i].pos.x*scale,particles[i].pos.y*scale);
             window.draw(circles[i]);
         }
-        const float px = static_cast<float>(sim.piston_x());
-        piston.setSize(sf::Vector2f(px, static_cast<float>(conf.h)));
+        const float px = static_cast<float>(sim.piston_x() * scale);
+        piston.setSize(sf::Vector2f(px, static_cast<float>(conf.h * scale)));
         window.draw(piston);
         refreshLabel(label, sim, steps);
         window.draw(label);

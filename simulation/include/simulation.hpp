@@ -8,12 +8,11 @@ namespace Simulation{
         int n = 2;
         double h = 300;
         double w = 300;
-        double r = 0.8;
+        double r = 1;
         double m = 1;
         double dt = 0.05;
         double initial_speed = 1;
         unsigned seed = 42;
-        vec2::Vec2 g = vec2::Vec2(0,9.8);
     };
     
     bool resolve_collision(Particle& a, Particle& b);

@@ -2,6 +2,8 @@
 #include "vec2.hpp"
 using namespace vec2;
 #include <iostream>
+
+
 struct Particle{
     double r;
     double m;

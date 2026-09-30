@@ -1,18 +1,15 @@
 #include <cmath>
 #include <iostream>
-
+#include "species.hpp"
 #include "simulation.hpp"
+using namespace Simulation::units;
+
 
 int main() {
 
-    Simulation::Config config;
-    config.n = 10;
-    config.w = 100.0;
-    config.h = 100.0;
-    config.r = 0.8;
-    config.m = 1.0;
-    config.initial_speed = 1.0;
-    config.dt = 0.05;
+
+
+    Simulation::Config config = Simulation::make_config(Simulation::Argon, 300.0, 20*nm, 20*nm, 20);
     config.seed = 42;
 
     Simulation::Simulation sim(config);
