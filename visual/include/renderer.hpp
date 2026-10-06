@@ -8,7 +8,7 @@ class Renderer{
     public:
         Renderer(const Simulation::Config& config, double pixels_per_meter);
 
-        void draw();
+        void draw(sf::RenderWindow& w,const Simulation::Simulation& sim, int steps);
 
         unsigned window_width() const;
         unsigned window_height() const;
@@ -21,6 +21,8 @@ class Renderer{
             void update_label(const Simulation::Simulation& sim, int steps);
 
             double scale_;
+            unsigned width_;
+            unsigned height_;
             sf::CircleShape circle_;      // один круг для всех частиц
             sf::RectangleShape piston_;
             sf::Font font_;
