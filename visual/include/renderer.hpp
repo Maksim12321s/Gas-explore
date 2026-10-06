@@ -9,6 +9,7 @@ class Renderer{
         Renderer(const Simulation::Config& config, double pixels_per_meter);
 
         void draw(sf::RenderWindow& w,const Simulation::Simulation& sim, int steps);
+        
 
         unsigned window_width() const;
         unsigned window_height() const;

@@ -13,12 +13,16 @@ using namespace Simulation::units;
 
 int main(){
     bool wasPressed = false;
-    const bool debug = true;
+    const bool debug = false;
     int steps = 5;
 
     Simulation::Config conf = Simulation::make_config(Simulation::Argon, 300.0, 20*nm, 20*nm, 200);
     
-    const double u = 0.01;
+
+    
+
+
+    const double u = 10;
 
     const double scale = 800/conf.w;
     
@@ -48,16 +52,18 @@ int main(){
                 if(debug == true){
 
                 }
+                if(sf::Keyboard::isKeyPressed(sf::Keyboard::Right)){
+                    sim.set_piston_vel(u);
+                }else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Left)){
+                    sim.set_piston_vel(-u);
+                }else{
+                    sim.set_piston_vel(0);
+                }
             }
-            // if(sf::Keyboard::isKeyPressed(sf::Keyboard::Right)){
-            //     sim.set_piston_vel(u);
-            // }else if(sf::Keyboard::isKeyPressed(sf::Keyboard::Left)){
-            //     sim.set_piston_vel(-u);
-            // }else{
-            //     sim.set_piston_vel(0);
-            // }
+            
         }
-
+        
+        
         window.clear(sf::Color::Black);
         r.draw(window,sim,steps);
         window.display();

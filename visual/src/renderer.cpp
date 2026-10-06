@@ -20,6 +20,8 @@ Renderer::Renderer(const Simulation::Config& config, double pixels_per_meter) : 
     label_.setFillColor(sf::Color::White);
     label_.setPosition(10.f, 10.f);  
 
+    piston_.setFillColor(sf::Color(90, 90, 110));
+    piston_.setPosition(0.f, 0.f);
 
 }
 
@@ -55,6 +57,9 @@ void Renderer::draw(sf::RenderWindow& w, const Simulation::Simulation& sim, int 
         circle_.setPosition(to_screen(p[i].pos));
         w.draw(circle_);
     }
+    const float piston_width = static_cast<float>(sim.piston_x() * scale_);
+    piston_.setSize(sf::Vector2f(piston_width, static_cast<float>(height_)));
+    w.draw(piston_);
     update_label(sim, steps);
     w.draw(label_);
 
