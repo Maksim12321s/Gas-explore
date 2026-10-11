@@ -1,14 +1,16 @@
 #include <gtest/gtest.h>
 #include "simulation.hpp"
 #include "species.hpp"
+#include <cmath>
+#include <iostream>
 using namespace Simulation::units;
 namespace {
     Particle make(double x, double y, double vx, double vy, double m = 1.0) {
         return Particle(1.0, m, Vec2(x, y), Vec2(vx, vy));
     }
-    // Simulation::Config Set_config(){
-    //     return Simulation::make_config(Simulation::Argon,300.0, 45*nm, 45*nm,300);
-    // }
+    double countKineticEnergyProjection(double m, double v){
+        return m*v*v/2;
+    }
     void RunSteps(Simulation::Simulation& sim, int n){
         for(int i = 0; i < n; i++){
             sim.step();
@@ -66,6 +68,16 @@ TEST(Collision, HeadOnEqualMassesSwapVelocities) {
     EXPECT_NEAR(b.vel.x, 1.0, 1e-12);
 }
 
+TEST(Collision, HeadOnNotEqualMasses){
+    Particle a = make(0.0, 0.0, 1.0, 0.0, 2.0);
+    Particle b = make(1.5, 0.0, -1.0, 0.0, 1.0);
+
+    ASSERT_TRUE(Simulation::resolve_collision(a,b));
+    EXPECT_NEAR(a.vel.x, -1.0/3.0, 1e-12);
+    EXPECT_NEAR(b.vel.x, 5.0/3.0, 1e-12);
+
+}
+
 TEST_F(AdiabaticTest, SlowCompressionKeepsTemperatureTimesAreaConstant) {
     Simulation::Simulation sim(conf);
     equilibrate(sim);
@@ -95,3 +107,19 @@ TEST_F(AdiabaticTest, SlowCycleReturnsToInitialTemperature) {
 
     EXPECT_NEAR( T1 / T0, 1.0, 0.05);
 }
+
+TEST_F(AdiabaticTest, FastCompressionHeatsMoreThanAdiabat) {
+    Simulation::Simulation sim(conf);
+    equilibrate(sim);
+
+    const double u = conf.initial_speed;   
+    ASSERT_TRUE(move_piston_to(sim, 0.4 * conf.w, u));
+    RunSteps(sim, 2000);
+
+    const double T1 = sim.temperature();
+    const double A1 = gas_area(sim);
+
+
+    EXPECT_GT((T1 * A1) / (T0 * A0), 1.05) << "быстрое сжатие должно нагревать сильнее адиабаты";
+}
+
