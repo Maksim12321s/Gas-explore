@@ -11,6 +11,13 @@ namespace {
     double countKineticEnergyProjection(double m, double v){
         return m*v*v/2;
     }
+    double countKineticEnergy(double m, vec2::Vec2 u){
+        return (m*u.x*u.x / 2 + m*u.y*u.y/2);
+    }
+    
+    vec2::Vec2 countImpulse(const Particle& p){
+        return (p.vel)*p.m;
+    }
     void RunSteps(Simulation::Simulation& sim, int n){
         for(int i = 0; i < n; i++){
             sim.step();
@@ -75,6 +82,32 @@ TEST(Collision, HeadOnNotEqualMasses){
     ASSERT_TRUE(Simulation::resolve_collision(a,b));
     EXPECT_NEAR(a.vel.x, -1.0/3.0, 1e-12);
     EXPECT_NEAR(b.vel.x, 5.0/3.0, 1e-12);
+
+}
+
+TEST(Energy, SaveEnergyAfterCollision){
+    Particle a = make(0.0, 0.0, 1.0, 0.0, 2.0);
+    Particle b = make(0.0, 1.5, -1.0, -1.0, 1.0);
+
+    const double OldEn = countKineticEnergy(a.m,a.vel) + countKineticEnergy(b.m, b.vel);
+
+    ASSERT_TRUE(Simulation::resolve_collision(a,b));
+
+    const double NewEn = countKineticEnergy(a.m,a.vel) + countKineticEnergy(b.m, b.vel);
+
+    EXPECT_NEAR(OldEn,NewEn,1e-12);
+}
+
+TEST(Impulse, SaveImpulseAfterCollison){
+    Particle a = make(0.0, 0.0, 1.0, 0.0, 2.0);
+    Particle b = make(0.0, 1.5, -1.0, -1.0, 1.0);
+
+    const vec2::Vec2 OldImp = countImpulse(a) + countImpulse(b);
+    ASSERT_TRUE(Simulation::resolve_collision(a,b));
+    const vec2::Vec2 NewImp = countImpulse(a) + countImpulse(b);
+
+    EXPECT_NEAR(OldImp.x,NewImp.x,1e-12);
+    EXPECT_NEAR(OldImp.y,NewImp.y,1e-12);
 
 }
 
