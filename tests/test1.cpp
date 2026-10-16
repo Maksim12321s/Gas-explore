@@ -64,6 +64,42 @@ namespace {
             double T0 = 0.0;
             double A0 = 0.0;
         };
+    
+    class SimulationTest : public ::testing::Test{
+        protected:
+            void SetUp(){
+                conf = Simulation::make_config(Simulation::Argon, 300.0, 45*nm, 45*nm, 300);
+            }
+
+            void equilibrate(Simulation::Simulation& sim) {
+                RunSteps(sim, 2000);
+                T0 = sim.temperature();
+                En0 = countSystemEnergy(sim);
+                Imp0 = countSystemImpulse(sim);
+            }
+            double countSystemEnergy(Simulation::Simulation& sim){
+                const std::vector<Particle>& p = sim.particles();
+                double En = 0.0;
+                for(int i = 0; i < p.size(); i++){
+                    En += countKineticEnergy(p[i].m,p[i].vel);
+                }
+                return En;
+            }
+            vec2::Vec2 countSystemImpulse(Simulation::Simulation& sim){
+                const std::vector<Particle>& p = sim.particles();
+                vec2::Vec2 Imp = vec2::Vec2(0.0,0.0);
+                for(int i = 0; i < p.size(); i++){
+                    Imp = Imp + countImpulse(p[i]);
+                }
+                return Imp;
+            }
+
+
+            Simulation::Config conf;
+            double T0 = 0.0;
+            double En0 = 0.0;
+            vec2::Vec2 Imp0= vec2::Vec2(0.0,0.0);
+    };
 }
 
 TEST(Collision, HeadOnEqualMassesSwapVelocities) {
@@ -108,6 +144,34 @@ TEST(Impulse, SaveImpulseAfterCollison){
 
     EXPECT_NEAR(OldImp.x,NewImp.x,1e-12);
     EXPECT_NEAR(OldImp.y,NewImp.y,1e-12);
+
+}
+
+TEST_F(SimulationTest, EnergyTest){
+    Simulation::Simulation sim(conf);
+    equilibrate(sim);
+
+    const double En0 = countSystemEnergy(sim);
+    RunSteps(sim, 1000);
+
+    const double En1 = countSystemEnergy(sim);
+    
+    EXPECT_NEAR(En0,En1, 1e-12);
+    
+}
+
+TEST_F(SimulationTest, ImpulseTest){
+    Simulation::Simulation sim(conf);
+    equilibrate(sim);
+
+    const vec2::Vec2 Imp0 = countSystemImpulse(sim);
+    
+    RunSteps(sim, 1000);
+
+    const vec2::Vec2 Imp1 = countSystemImpulse(sim);
+    
+    EXPECT_NEAR(Imp0.x, Imp1.x, 1e-12);
+    EXPECT_NEAR(Imp0.y, Imp1.y, 1e-12);
 
 }
 
