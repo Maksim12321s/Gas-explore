@@ -1,42 +1,62 @@
 CXX        := g++
-CXXFLAGS   := -std=c++17 -O2 -Wall -Wextra -Wpedantic -Isimulation/include -MMD -MP
+MODE ?= release
+
+ifeq ($(MODE),debug)
+	OPT 	:= -O0 -g
+	BUILD 	:= build-make/debug
+else ifeq ($(MODE), asan)
+	OPT 	:= -O1 -g  -fno-omit-frame-pointer -fsanitize=address,undefined
+	LDFLAGS += -fsanitize=address,undefined
+  	BUILD   := build-make/asan
+else
+	OPT     := -O2
+  	BUILD   := build-make/release
+endif
+
+CXXFLAGS   := -std=c++17 $(OPT) -Wall -Wextra -Wpedantic \
+              -Isimulation/include -Ianalysis/include -MMD -MP
 SFML_LIBS  := -lsfml-graphics -lsfml-window -lsfml-system
 GTEST_LIBS := -lgtest_main -lgtest -pthread
-BUILD      := build-make
 
 # ---------- Исходники по модулям ----------
 SIM_SRC  := $(wildcard simulation/src/*.cpp)
 VIS_SRC  := $(wildcard visual/src/*.cpp)
 APP_SRC  := console/main.cpp
 TEST_SRC := $(wildcard tests/*.cpp)
+AN_SRC   := $(wildcard analysis/src/*.cpp)
+
 
 SIM_OBJ  := $(patsubst %.cpp,$(BUILD)/%.o,$(SIM_SRC))
 VIS_OBJ  := $(patsubst %.cpp,$(BUILD)/%.o,$(VIS_SRC))
 APP_OBJ  := $(patsubst %.cpp,$(BUILD)/%.o,$(APP_SRC))
 TEST_OBJ := $(patsubst %.cpp,$(BUILD)/%.o,$(TEST_SRC))
+AN_OBJ   := $(patsubst %.cpp,$(BUILD)/%.o,$(AN_SRC))
+
 
 APP      := $(BUILD)/gaz
 VISUAL   := $(BUILD)/gaz_visual
 TEST_BIN := $(BUILD)/gaz_tests
 
-.PHONY: all run visual test clean
+.PHONY: all run visual test clean plot gdb gdb-visual gdb-test 
 
 all: $(APP)
 
 # Консольная программа: физика + console/main.cpp
-$(APP): $(SIM_OBJ) $(APP_OBJ)
-	$(CXX) $^ -o $@
+$(APP): $(SIM_OBJ) $(APP_OBJ) $(AN_OBJ)
+	$(CXX) $^ -o $@ $(LDFLAGS)
 
 # Визуализация: физика + всё из visual/src, плюс SFML
 $(VISUAL): $(SIM_OBJ) $(VIS_OBJ)
-	$(CXX) $^ -o $@ $(SFML_LIBS)
+	$(CXX) $^ -o $@ $(LDFLAGS) $(SFML_LIBS) 
 
 # Тесты: физика + tests, плюс GoogleTest (библиотеки — после объектных файлов)
 $(TEST_BIN): $(SIM_OBJ) $(TEST_OBJ)
-	$(CXX) $^ -o $@ $(GTEST_LIBS)
+	$(CXX) $^ -o $@ $(LDFLAGS) $(GTEST_LIBS)
 
 # Заголовки визуализации видны только файлам визуализации.
 $(VIS_OBJ): CXXFLAGS += -Ivisual/include
+
+$(AN_OBJ) $(APP_OBJ): CXXFLAGS += -Ianalysis/include 
 
 # Общее правило: build-make/путь/файл.o собирается из путь/файл.cpp
 $(BUILD)/%.o: %.cpp
@@ -57,8 +77,21 @@ test: $(TEST_BIN)
 	./$(TEST_BIN)
 endif
 
+plot: $(APP)
+	  ./$(APP)
+	#   python3 scripts/plot_adiabat.py
+
+gdb: $(APP)
+	gdb ./$(APP)
+
+gdb-visual: $(VISUAL)
+	gdb ./$(VISUAL)
+
+gdb-test: $(TEST_BIN)
+	gdb ./$(TEST_BIN)
+
 clean:
-	rm -rf $(BUILD)
+	rm -rf build-make
 
 # Файлы зависимостей от заголовков (создаются флагами -MMD -MP).
--include $(SIM_OBJ:.o=.d) $(VIS_OBJ:.o=.d) $(APP_OBJ:.o=.d) $(TEST_OBJ:.o=.d)
+-include $(SIM_OBJ:.o=.d) $(VIS_OBJ:.o=.d) $(APP_OBJ:.o=.d) $(TEST_OBJ:.o=.d) $(AN_OBJ:.o=.d)
