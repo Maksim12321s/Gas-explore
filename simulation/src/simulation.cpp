@@ -73,8 +73,8 @@ namespace Simulation {
 
         cells.resize(this->cols* this->rows);
         walls_imp.resize(4);
-        // piston_max_x = 3.0/4.0*config_.w;
-        piston_max_x = 330;
+        piston_max_x = 3.0/4.0*config_.w;
+        // piston_max_x = 330;
 
     }
     
@@ -223,7 +223,7 @@ namespace Simulation {
     double Simulation::piston_velocity() const { return piston_u; }
     const Config& Simulation::config() const { return config_; }
     const std::vector<Particle>& Simulation::particles() const { return particles_; }
+    double Simulation::area() const { return (config_.w - piston_x_)*config_.h; }
 
-    
 
 };

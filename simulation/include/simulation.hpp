@@ -28,6 +28,8 @@ namespace Simulation{
         double temperature() const;
         
         double wall_impulse() const;
+        double area() const;
+        
         void reset_wall_impulse();
     
         double current_time() const;
