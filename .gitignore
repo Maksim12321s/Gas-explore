@@ -1,7 +1,7 @@
 
 build/
 build-make/
-
+output/
 
 CMakeCache.txt
 CMakeFiles/
