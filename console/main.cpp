@@ -2,70 +2,95 @@
 #include <iostream>
 #include "species.hpp"
 #include "simulation.hpp"
+#include "statistics.hpp"
+#include <iostream>
 using namespace Simulation::units;
 
+namespace {
+    
+};
 
 int main() {
 
+    Simulation::Config conf = Simulation::make_config(Simulation::Argon,300.0,30.0 * nm, 30.0 * nm, 300);
+    Simulation::Simulation sim(conf);
+    analysis::TimeSeries time;
+    const int n = 3000;
+    int record_every = 500;
 
-
-    Simulation::Config config = Simulation::make_config(Simulation::Argon, 300.0, 20*nm, 20*nm, 20);
-    config.seed = 42;
-
-    Simulation::Simulation sim(config);
-
-    const double e0 = sim.kinetic_energy();
-    const double e_expected =
-        config.n * 0.5 * config.m * config.initial_speed * config.initial_speed;
-    std::cout << "Initial energy: " << e0 << "  (expected " << e_expected << ")\n";
-
-    std::cout << "First particles:\n";
-    for (int i = 0; i < 3; ++i) {
-        const auto& p = sim.particles()[i];
-        std::cout << "  pos = (" << p.pos.x << ", " << p.pos.y << ")"
-                  << "  vel = (" << p.vel.x << ", " << p.vel.y << ")"
-                  << "  |v| = " << p.vel.len() << '\n';
-    }
-
-
-    const int total_steps = 6000;
-    const int warmup_steps = 2000;  
-    double max_drift = 0.0;
-
-    for (int s = 1; s <= total_steps; ++s) {
+    std::cout << "начало записи\nшагов:"<< n  << std::endl << "--------------------------" << std::endl;
+    for(int i = 0; i < n; i++){
         sim.step();
-        if (s == warmup_steps) {
-            sim.reset_wall_impulse();
-        }
-
-        const double drift = std::abs(sim.kinetic_energy() - e0) / e0;
-        if (drift > max_drift) max_drift = drift;
-
-        if (s % 1000 == 0) {
-            std::cout << "step " << s << "  t = " << sim.current_time()
-                      << "  E = " << sim.kinetic_energy() << '\n';
-        }
+        double t = i*conf.dt;
+        if(i % record_every == 0){
+            time.record(sim);
+        } 
     }
-    std::cout << "Max relative energy drift: " << max_drift << '\n';
+    std::cout << "Симуляция окончена." << std::endl;
+    time.write_csv();
+    std::cout << "--------------------------" << std::endl << "конец записи." << std::endl;
 
 
-    int outside = 0;
-    for (const auto& p : sim.particles()) {
-        if (p.pos.x < 0 || p.pos.x > config.w || p.pos.y < 0 || p.pos.y > config.h) {
-            ++outside;
-        }
-    }
-    std::cout << "Particles outside the box: " << outside << '\n';
-
-    const double measure_time = (total_steps - warmup_steps) * config.dt;
-    const double perimeter = 2.0 * (config.w + config.h);
-    const double p_measured = sim.wall_impulse() / (measure_time * perimeter);
-    const double p_ideal = config.n * sim.temperature() / (config.w * config.h);
-    std::cout << "Temperature kT: " << sim.temperature() << '\n'
-              << "Pressure: simulation = " << p_measured << ", ideal gas = " << p_ideal
-              << ", ratio = " << p_measured / p_ideal << '\n';
-
-    const bool ok = max_drift < 1e-9 && outside == 0;
-    std::cout << (ok ? "OK\n" : "FAILED\n");
-    return ok ? 0 : 1;
+    
 }
+
+
+// Simulation::Config config = Simulation::make_config(Simulation::Argon, 300.0, 20*nm, 20*nm, 20);
+//     config.seed = 42;
+
+//     Simulation::Simulation sim(config);
+
+//     const double e0 = sim.kinetic_energy();
+//     const double e_expected =
+//         config.n * 0.5 * config.m * config.initial_speed * config.initial_speed;
+//     std::cout << "Initial energy: " << e0 << "  (expected " << e_expected << ")\n";
+
+//     std::cout << "First particles:\n";
+//     for (int i = 0; i < 3; ++i) {
+//         const auto& p = sim.particles()[i];
+//         std::cout << "  pos = (" << p.pos.x << ", " << p.pos.y << ")"
+//                   << "  vel = (" << p.vel.x << ", " << p.vel.y << ")"
+//                   << "  |v| = " << p.vel.len() << '\n';
+//     }
+
+
+//     const int total_steps = 6000;
+//     const int warmup_steps = 2000;  
+//     double max_drift = 0.0;
+
+//     for (int s = 1; s <= total_steps; ++s) {
+//         sim.step();
+//         if (s == warmup_steps) {
+//             sim.reset_wall_impulse();
+//         }
+
+//         const double drift = std::abs(sim.kinetic_energy() - e0) / e0;
+//         if (drift > max_drift) max_drift = drift;
+
+//         if (s % 1000 == 0) {
+//             std::cout << "step " << s << "  t = " << sim.current_time()
+//                       << "  E = " << sim.kinetic_energy() << '\n';
+//         }
+//     }
+//     std::cout << "Max relative energy drift: " << max_drift << '\n';
+
+
+//     int outside = 0;
+//     for (const auto& p : sim.particles()) {
+//         if (p.pos.x < 0 || p.pos.x > config.w || p.pos.y < 0 || p.pos.y > config.h) {
+//             ++outside;
+//         }
+//     }
+//     std::cout << "Particles outside the box: " << outside << '\n';
+
+//     const double measure_time = (total_steps - warmup_steps) * config.dt;
+//     const double perimeter = 2.0 * (config.w + config.h);
+//     const double p_measured = sim.wall_impulse() / (measure_time * perimeter);
+//     const double p_ideal = config.n * sim.temperature() / (config.w * config.h);
+//     std::cout << "Temperature kT: " << sim.temperature() << '\n'
+//               << "Pressure: simulation = " << p_measured << ", ideal gas = " << p_ideal
+//               << ", ratio = " << p_measured / p_ideal << '\n';
+
+//     const bool ok = max_drift < 1e-9 && outside == 0;
+//     std::cout << (ok ? "OK\n" : "FAILED\n");
+//     return ok ? 0 : 1;
