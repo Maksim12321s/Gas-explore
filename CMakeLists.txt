@@ -10,7 +10,7 @@ endif()
 
 # ---------- Физика: библиотека gaz_core ----------
 add_subdirectory(simulation)
-
+add_subdirectory(analysis)
 # ---------- Консольная проверка ----------
 add_executable(gaz console/main.cpp)
 target_link_libraries(gaz PRIVATE gaz_core)
