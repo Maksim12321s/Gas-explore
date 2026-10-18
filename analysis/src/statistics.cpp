@@ -17,10 +17,10 @@ namespace analysis{
     }
     void TimeSeries::record(const Simulation::Simulation& sim){
         samples_.push_back(Sample(sim.current_time(),sim.kinetic_energy(),sim.temperature(),sim.area(), 0.0, 0.0));
-        if(samples_.size() > 1000){
-            write_csv(Path);
-            samples_.clear();
-        }
+        // if(samples_.size() > 1000){
+        //     write_csv(Path);
+        //     samples_.clear();
+        // }
         last_time_ = sim.current_time();
         last_wall_impulse_ = sim.wall_impulse();
     }
@@ -45,6 +45,6 @@ namespace analysis{
     };
 
 
-    
+
 
 };

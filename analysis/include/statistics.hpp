@@ -19,7 +19,7 @@ namespace analysis{
         public:
             void record(const Simulation::Simulation& sim);
             const std::vector<Sample>& samples() const;
-            void write_csv(const std::string& path) const;
+            void write_csv(const std::string& path = "output/TimeStats.csv") const;
 
         private:
             const std::string Path = "output/TimeStats.csv";
