@@ -1,19 +1,22 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
-df = pd.read_csv(ROOT / "output" / "TimeStats.csv")
-path = ROOT / "output" / "TimeStats.csv"
+V_MAX = 10000.0  # максимальная скорость, подставь свою
 
-data = np.loadtxt(path, delimiter=",", skiprows=1)   
+with open("output/Histogramm.csv") as f:
+    lines = f.read().strip().splitlines()
 
-V = data[:, 0]   
-P = data[:, 1]   
+# вторая строка: счётчики, пустой элемент после последней запятой отбрасываем
+counts = np.array([float(s) for s in lines[1].split(",") if s.strip()])
 
-plt.scatter(V, P, s=10)
-plt.xlabel("V")
-plt.ylabel("P")
+n_bins = len(counts)
+bin_width = V_MAX / n_bins
+v = (np.arange(n_bins) + 0.5) * bin_width  # центры бинов
+
+plt.figure(figsize=(8, 5))
+plt.plot(v, counts, "o-", markersize=4)
+plt.xlabel("Скорость v")
+plt.ylabel("Число частиц")
+plt.title("Распределение частиц по скоростям")
 plt.grid(True)
 plt.show()
