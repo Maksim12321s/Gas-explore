@@ -33,7 +33,7 @@ namespace analysis{
             SpeedHistogramm(double max_speed, int bins);
             void add(const Simulation::Simulation& sim);
             std::vector<double> density() const;
-            void write_csv(const std::string& path) const;
+            void write_csv(const std::string& path = "output/Histogramm.csv") const;
 
         private:
             double max_speed_ = 0.0;
