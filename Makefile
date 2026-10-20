@@ -18,7 +18,6 @@ CXXFLAGS   := -std=c++17 $(OPT) -Wall -Wextra -Wpedantic \
 SFML_LIBS  := -lsfml-graphics -lsfml-window -lsfml-system
 GTEST_LIBS := -lgtest_main -lgtest -pthread
 
-# ---------- Исходники по модулям ----------
 SIM_SRC  := $(wildcard simulation/src/*.cpp)
 VIS_SRC  := $(wildcard visual/src/*.cpp)
 APP_SRC  := console/main.cpp
@@ -41,24 +40,19 @@ TEST_BIN := $(BUILD)/gaz_tests
 
 all: $(APP)
 
-# Консольная программа: физика + console/main.cpp
 $(APP): $(SIM_OBJ) $(APP_OBJ) $(AN_OBJ)
 	$(CXX) $^ -o $@ $(LDFLAGS)
 
-# Визуализация: физика + всё из visual/src, плюс SFML
 $(VISUAL): $(SIM_OBJ) $(VIS_OBJ)
 	$(CXX) $^ -o $@ $(LDFLAGS) $(SFML_LIBS) 
 
-# Тесты: физика + tests, плюс GoogleTest (библиотеки — после объектных файлов)
 $(TEST_BIN): $(SIM_OBJ) $(TEST_OBJ)
 	$(CXX) $^ -o $@ $(LDFLAGS) $(GTEST_LIBS)
 
-# Заголовки визуализации видны только файлам визуализации.
 $(VIS_OBJ): CXXFLAGS += -Ivisual/include
 
 $(AN_OBJ) $(APP_OBJ): CXXFLAGS += -Ianalysis/include 
 
-# Общее правило: build-make/путь/файл.o собирается из путь/файл.cpp
 $(BUILD)/%.o: %.cpp
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
@@ -93,5 +87,4 @@ gdb-test: $(TEST_BIN)
 clean:
 	rm -rf build-make
 
-# Файлы зависимостей от заголовков (создаются флагами -MMD -MP).
 -include $(SIM_OBJ:.o=.d) $(VIS_OBJ:.o=.d) $(APP_OBJ:.o=.d) $(TEST_OBJ:.o=.d) $(AN_OBJ:.o=.d)
